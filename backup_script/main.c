@@ -14,6 +14,7 @@
 #include <time.h>
 #include <copyfile.h>
 #include <stdbool.h>
+
 #import <pthread.h>
 
 #include "stack.h"
@@ -28,7 +29,8 @@ int copy_file(const char *from, const char *to);
 int copydir(const char *dirname, const char *destination_root);
 int compare_dates(const char *file1, const char *file2);
 char *get_filename(const char *path);
-void concat_paths(char *output, long output_size, const char *base, const char *extension);
+//void concat_paths(char *output, long output_size, const char *base, const char *extension);
+char *concat_paths(const char *base, const char *extension);
 
 struct thread_args {
     Stack *S;
@@ -128,8 +130,15 @@ int copydir(const char *dirname, const char *destination_root) {
         
     }
     
-    char destination_dir[1024];
-    concat_paths(destination_dir, sizeof(destination_dir), destination_root, get_filename(dirname));
+    //char destination_dir[1024];
+    //long destination_dir_len = sizeof(char) * (strlen(destination_root) + strlen(get_filename(dirname)) + 2);
+    //char destination_dir[destination_dir_len];
+    
+    char *destination_dir = concat_paths(destination_root, get_filename(dirname));
+    
+    //snprintf(destination_dir, destination_dir_len, "%s/%s", destination_root, get_filename(dirname));
+    
+    //concat_paths(destination_dir, destination_dir_len, destination_root, get_filename(dirname));
     
     if(stat(destination_dir, &st) == -1) {
         
@@ -143,11 +152,13 @@ int copydir(const char *dirname, const char *destination_root) {
             continue;
         }
         
-        char current_path[1024];
-        concat_paths(current_path, sizeof(current_path), dirname, pDirent->d_name);
+        /*char current_path[1024];
+        concat_paths(current_path, sizeof(current_path), dirname, pDirent->d_name);*/
+        char *current_path = concat_paths(dirname, pDirent->d_name);
         
-        char destination[1024];
-        concat_paths(destination, sizeof(destination), destination_dir, pDirent->d_name);
+        /*char destination[1024];
+        concat_paths(destination, sizeof(destination), destination_dir, pDirent->d_name);*/
+        char *destination = concat_paths(destination_dir, pDirent->d_name);
         
         if(pDirent->d_type == DT_REG) {
             
@@ -214,9 +225,22 @@ char *get_filename(const char* path) {
     return dest;
 }
 
-void concat_paths(char *output, long output_size, const char *base, const char *extension) {
+/*void concat_paths(char *output, long output_size, const char *base, const char *extension) {
     
     int pathlen = snprintf(output, output_size, "%s/%s", base, extension);
     output[pathlen] = 0;
+    
+}*/
+
+char *concat_paths(const char *base, const char *extension) {
+    int path_separator_len = 1;
+    long output_size = sizeof(char) * (strlen(base) + strlen(extension) + path_separator_len + 1);
+    
+    char *output = malloc(output_size);
+    
+    int pathlen = snprintf(output, output_size, "%s/%s", base, extension);
+    output[pathlen] = 0;
+    
+    return output;
     
 }
